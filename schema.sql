@@ -36,7 +36,12 @@ create table if not exists games (
   total numeric,                     -- DraftKings over/under line
   home_score int,
   away_score int,
-  completed boolean not null default false
+  completed boolean not null default false,
+  -- When this game's line was last refreshed from the live odds API — by
+  -- either the daily sync or a lock-time freshness check (see
+  -- /api/picks/check-line). Null means never checked since that feature
+  -- shipped, which always triggers a fresh check.
+  line_checked_at timestamptz
 );
 
 -- One bet per person per week, on any game in that week's slate.

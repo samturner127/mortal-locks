@@ -70,6 +70,8 @@ export default function HomePage() {
   // lock/flame animation so it doesn't replay every time someone with an
   // already-existing pick just reloads the page.
   const [justLocked, setJustLocked] = useState(false);
+  const [checkingLine, setCheckingLine] = useState(false);
+  const [lineChangeModal, setLineChangeModal] = useState<{ oldLine: number; newLine: number } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -121,7 +123,11 @@ export default function HomePage() {
   const gameLocked = new Date(selectedGame.commence_time).getTime() <= Date.now();
   const myPick = poolPicks.find((p) => p.user_id === session.userId);
 
-  async function submit() {
+  // lineOverride, when given, is the freshly-confirmed line from an accepted
+  // line-change prompt — used for the optimistic local update below instead
+  // of selectedGame's (now stale) value. The actual submitted pick always
+  // gets its real line resolved fresh from the DB server-side regardless.
+  async function submit(lineOverride?: number) {
     setStatus("saving");
     setErrorMsg(null);
     const res = await fetch("/api/picks", {
@@ -140,6 +146,8 @@ export default function HomePage() {
     if (res.ok) {
       setStatus("saved");
       setJustLocked(true);
+      const fallbackLine =
+        pickType === "spread" ? (pickedSide === "home" ? selectedGame.home_spread : selectedGame.away_spread) : selectedGame.total;
       // Optimistically reflect the new pick locally so the locked-in view
       // shows immediately, without waiting on a refetch.
       setPoolPicks((prev) => [
@@ -153,10 +161,7 @@ export default function HomePage() {
           commence_time: selectedGame.commence_time,
           pick_type: pickType,
           picked_side: pickedSide,
-          locked_line:
-            pickType === "spread"
-              ? (pickedSide === "home" ? selectedGame.home_spread : selectedGame.away_spread)!
-              : selectedGame.total!,
+          locked_line: lineOverride ?? fallbackLine!,
           is_double_down: isDoubleDown,
           is_auto_pick: false,
           result: null,
@@ -167,6 +172,48 @@ export default function HomePage() {
       setErrorMsg(d.error ?? "Something went wrong.");
       setStatus("error");
     }
+  }
+
+  function currentExpectedLine(): number | null {
+    const v = pickType === "spread" ? (pickedSide === "home" ? selectedGame.home_spread : selectedGame.away_spread) : selectedGame.total;
+    return v === null ? null : Number(v);
+  }
+
+  // Runs a live freshness check right at lock-in time, since the daily sync
+  // could be hours stale if a line moved (e.g. a late injury announcement).
+  // Fails open — if the check itself errors out, submit anyway rather than
+  // block picking over a flaky odds-API call.
+  async function handleLockClick() {
+    const expectedLine = currentExpectedLine();
+    if (expectedLine === null) {
+      await submit();
+      return;
+    }
+    setCheckingLine(true);
+    try {
+      const res = await fetch("/api/picks/check-line", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId: selectedGame.id, pickType, pickedSide, expectedLine }),
+      });
+      const d = await res.json();
+      if (res.ok && d.changed) {
+        setLineChangeModal({ oldLine: expectedLine, newLine: d.currentLine });
+      } else {
+        await submit();
+      }
+    } catch {
+      await submit();
+    } finally {
+      setCheckingLine(false);
+    }
+  }
+
+  function acceptLineChange() {
+    if (!lineChangeModal) return;
+    const newLine = lineChangeModal.newLine;
+    setLineChangeModal(null);
+    submit(newLine);
   }
 
   return (
@@ -358,13 +405,44 @@ export default function HomePage() {
               </p>
             )}
 
-            <button
-              onClick={submit}
-              disabled={status === "saving"}
-              className="mt-6 w-full bg-amber text-field font-semibold rounded-md py-2 hover:opacity-90 transition disabled:opacity-50"
-            >
-              {status === "saving" ? "Saving…" : "Lock it in"}
-            </button>
+            {lineChangeModal ? (
+              <div className="mt-6 rounded-lg border border-amber bg-amber/10 p-4">
+                <p className="font-mono text-[11px] tracking-widest2 text-amber uppercase mb-1">
+                  Odds changed
+                </p>
+                <p className="text-sm mb-3">
+                  The line moved since we last synced —{" "}
+                  <span className="font-mono">
+                    {pickType === "spread" ? formatSpread(lineChangeModal.oldLine) : lineChangeModal.oldLine} →{" "}
+                    {pickType === "spread" ? formatSpread(lineChangeModal.newLine) : lineChangeModal.newLine}
+                  </span>
+                  . Lock it in at the new line?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={acceptLineChange}
+                    disabled={status === "saving"}
+                    className="flex-1 bg-amber text-field font-semibold rounded-md py-2 hover:opacity-90 transition disabled:opacity-50"
+                  >
+                    Accept new line
+                  </button>
+                  <button
+                    onClick={() => setLineChangeModal(null)}
+                    className="flex-1 border border-panelLine rounded-md py-2 text-mute hover:text-ink transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={handleLockClick}
+                disabled={status === "saving" || checkingLine}
+                className="mt-6 w-full bg-amber text-field font-semibold rounded-md py-2 hover:opacity-90 transition disabled:opacity-50"
+              >
+                {checkingLine ? "Checking odds…" : status === "saving" ? "Saving…" : "Lock it in"}
+              </button>
+            )}
             {status === "error" && <p className="text-loss text-sm text-center mt-2">{errorMsg}</p>}
           </>
         ) : !windowOpen && closesAt !== null && now >= closesAt ? (

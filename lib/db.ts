@@ -39,6 +39,7 @@ export type Game = {
   home_score: number | null;
   away_score: number | null;
   completed: boolean;
+  line_checked_at: string | null;
 };
 
 export type Pick = {
@@ -102,6 +103,29 @@ export async function getWeekGames(weekId: number): Promise<Game[]> {
     [weekId]
   );
   return rows;
+}
+
+export async function getGameById(gameId: number): Promise<Game | null> {
+  const { rows } = await pool.query<Game>(`select * from games where id = $1`, [gameId]);
+  return rows[0] ?? null;
+}
+
+/**
+ * Refreshes stored lines for games already in the DB, from a freshly-fetched
+ * odds batch. Narrower than the sync-week upsert on purpose — no week
+ * bucketing, no inserting new games/weeks, just updates lines + the
+ * freshness timestamp on rows that already exist (matched by external_id).
+ */
+export async function refreshGameLines(
+  weekGames: { externalId: string; homeSpread: number | null; awaySpread: number | null; total: number | null }[]
+): Promise<void> {
+  for (const g of weekGames) {
+    await pool.query(
+      `update games set home_spread = $1, away_spread = $2, total = $3, line_checked_at = now()
+       where external_id = $4`,
+      [g.homeSpread, g.awaySpread, g.total, g.externalId]
+    );
+  }
 }
 
 /**

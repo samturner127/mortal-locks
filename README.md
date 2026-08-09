@@ -29,7 +29,11 @@ season-long double down to swing for more.
   **2 pushes**. It's spent the moment you use it — including on a push,
   there's no refund.
 - Lines are locked in at the moment you pick, so a later line move can't
-  retroactively help or hurt you.
+  retroactively help or hurt you. The daily sync could be hours stale, so
+  clicking "Lock it in" triggers a live freshness check first (throttled to
+  once every 5 minutes per game) — if the line moved since the last sync,
+  you're shown the new line and have to explicitly accept it before the pick
+  is actually submitted.
 - Picks are visible to the rest of the pool the instant they're submitted —
   no waiting for kickoff. A specific game still can't be picked once it's
   already started, independent of the week's overall submission window.
