@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserById, getWeek, getWeekGames, upsertPick, hasDoubleDownElsewhere, type Game } from "@/lib/db";
+import { getUserById, getWeek, getWeekGames, getUserPickForWeek, insertPick, hasDoubleDownElsewhere, type Game } from "@/lib/db";
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -46,6 +46,14 @@ export async function POST(req: Request) {
     );
   }
 
+  const existing = await getUserPickForWeek(userId, weekId);
+  if (existing) {
+    return NextResponse.json(
+      { error: "You've already locked in your pick for this week — it can't be changed." },
+      { status: 403 }
+    );
+  }
+
   const games = await getWeekGames(weekId);
   const game = games.find((g) => g.id === gameId) as Game | undefined;
   if (!game) {
@@ -72,6 +80,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "DraftKings hasn't posted that line yet." }, { status: 400 });
   }
 
-  await upsertPick({ userId, weekId, gameId, pickType, pickedSide, lockedLine, isDoubleDown });
+  const inserted = await insertPick({ userId, weekId, gameId, pickType, pickedSide, lockedLine, isDoubleDown });
+  if (!inserted) {
+    return NextResponse.json(
+      { error: "You've already locked in your pick for this week — it can't be changed." },
+      { status: 403 }
+    );
+  }
   return NextResponse.json({ ok: true });
 }

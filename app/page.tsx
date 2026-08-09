@@ -66,6 +66,10 @@ export default function HomePage() {
   const [isDoubleDown, setIsDoubleDown] = useState(false);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // Only true right after a successful submit in this session — gates the
+  // lock/flame animation so it doesn't replay every time someone with an
+  // already-existing pick just reloads the page.
+  const [justLocked, setJustLocked] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -135,6 +139,29 @@ export default function HomePage() {
     });
     if (res.ok) {
       setStatus("saved");
+      setJustLocked(true);
+      // Optimistically reflect the new pick locally so the locked-in view
+      // shows immediately, without waiting on a refetch.
+      setPoolPicks((prev) => [
+        ...prev.filter((p) => p.user_id !== session!.userId),
+        {
+          user_id: session!.userId,
+          name: session!.name,
+          game_id: selectedGame.id,
+          home_team: selectedGame.home_team,
+          away_team: selectedGame.away_team,
+          commence_time: selectedGame.commence_time,
+          pick_type: pickType,
+          picked_side: pickedSide,
+          locked_line:
+            pickType === "spread"
+              ? (pickedSide === "home" ? selectedGame.home_spread : selectedGame.away_spread)!
+              : selectedGame.total!,
+          is_double_down: isDoubleDown,
+          is_auto_pick: false,
+          result: null,
+        },
+      ]);
     } else {
       const d = await res.json();
       setErrorMsg(d.error ?? "Something went wrong.");
@@ -254,7 +281,24 @@ export default function HomePage() {
           })}
         </div>
 
-        {windowOpen && !gameLocked ? (
+        {myPick ? (
+          <div className="text-center py-4">
+            {justLocked && <LockAnimation />}
+            <p className="font-mono text-[11px] tracking-widest2 text-mute uppercase mb-2">
+              Locked in for this week
+            </p>
+            <p className="font-display text-xl">
+              {describePick(myPick)}
+              {myPick.is_double_down && <span className="ml-2 text-loss text-base align-middle">2x</span>}
+              {myPick.is_auto_pick && <span className="ml-2 text-mute text-sm align-middle">(auto)</span>}
+            </p>
+            <p className="text-mute text-xs mt-3">
+              {myPick.is_auto_pick
+                ? "You missed the cutoff — this was auto-assigned."
+                : "No changes once submitted."}
+            </p>
+          </div>
+        ) : windowOpen && !gameLocked ? (
           <>
             {/* Spread vs total */}
             <div className="flex gap-2 mb-4">
@@ -319,20 +363,12 @@ export default function HomePage() {
               disabled={status === "saving"}
               className="mt-6 w-full bg-amber text-field font-semibold rounded-md py-2 hover:opacity-90 transition disabled:opacity-50"
             >
-              {status === "saving" ? "Saving…" : myPick ? "Update lock" : "Lock it in"}
+              {status === "saving" ? "Saving…" : "Lock it in"}
             </button>
-            {status === "saved" && <p className="text-teal text-sm text-center mt-2">Locked in.</p>}
             {status === "error" && <p className="text-loss text-sm text-center mt-2">{errorMsg}</p>}
           </>
         ) : !windowOpen && closesAt !== null && now >= closesAt ? (
-          <div className="text-mute text-sm">
-            <p>Picks are closed for this week.</p>
-            {myPick?.is_auto_pick && (
-              <p className="mt-1">
-                You missed the cutoff — you were auto-picked: {describePick(myPick)}.
-              </p>
-            )}
-          </div>
+          <p className="text-mute text-sm">Picks are closed for this week.</p>
         ) : !windowOpen ? (
           <p className="text-mute text-sm">
             Picks open{" "}
@@ -379,6 +415,32 @@ export default function HomePage() {
           {poolPicks.length === 0 && <p className="text-mute text-sm">Nobody&apos;s picked yet — be the first.</p>}
         </ul>
       </div>
+    </div>
+  );
+}
+
+/** Plays once on mount — a padlock snapping shut with a burst of flames. */
+function LockAnimation() {
+  return (
+    <div className="lock-anim-stage" aria-hidden="true">
+      <div className="lock-anim-flames">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <span key={i} className="lock-anim-flame" style={{ "--i": i } as React.CSSProperties} />
+        ))}
+      </div>
+      <svg className="lock-anim-svg" viewBox="0 0 64 64" width="56" height="56">
+        <rect x="16" y="28" width="32" height="26" rx="6" fill="#F5A623" />
+        <circle cx="32" cy="40" r="4" fill="#0B1220" />
+        <rect x="30" y="42" width="4" height="8" rx="2" fill="#0B1220" />
+        <path
+          className="lock-anim-shackle"
+          d="M22 28 V20 a10 10 0 0 1 20 0 V28"
+          fill="none"
+          stroke="#F5A623"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+      </svg>
     </div>
   );
 }

@@ -23,3 +23,96 @@ body {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* Lock-in animation: a padlock snapping shut with a burst of flames,
+   played once when a pick is submitted. */
+.lock-anim-stage {
+  position: relative;
+  width: 100%;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lock-anim-svg {
+  position: relative;
+  z-index: 2;
+  animation: lock-glow 1.1s ease-out forwards;
+}
+
+.lock-anim-shackle {
+  transform-origin: 32px 28px;
+  animation: lock-snap 0.45s cubic-bezier(0.36, 1.8, 0.4, 1) forwards;
+}
+
+@keyframes lock-snap {
+  0% {
+    transform: rotate(-30deg) translateY(-6px);
+    opacity: 0.6;
+  }
+  55% {
+    transform: rotate(6deg) translateY(0);
+  }
+  100% {
+    transform: rotate(0deg) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes lock-glow {
+  0%,
+  40% {
+    filter: drop-shadow(0 0 0px rgba(245, 166, 35, 0));
+  }
+  60% {
+    filter: drop-shadow(0 0 14px rgba(245, 166, 35, 0.9));
+  }
+  100% {
+    filter: drop-shadow(0 0 4px rgba(245, 166, 35, 0.4));
+  }
+}
+
+.lock-anim-flames {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.lock-anim-flame {
+  --angle: calc(var(--i) * 45deg);
+  position: absolute;
+  width: 14px;
+  height: 20px;
+  border-radius: 60% 40% 60% 40% / 65% 40% 75% 40%;
+  background: linear-gradient(200deg, #f5a623, #e5484d 80%);
+  opacity: 0;
+  transform: rotate(var(--angle)) translateY(0) scale(0.3);
+  animation: flame-burst 0.9s ease-out forwards;
+  animation-delay: calc(var(--i) * 0.04s + 0.3s);
+}
+
+@keyframes flame-burst {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(0) scale(0.3);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(-46px) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lock-anim-shackle,
+  .lock-anim-svg,
+  .lock-anim-flame {
+    animation: none !important;
+  }
+}

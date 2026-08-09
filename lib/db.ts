@@ -175,7 +175,13 @@ export async function getUsersMissingPickForClosedWeeks(): Promise<{ userId: num
   return rows;
 }
 
-export async function upsertPick(params: {
+/**
+ * Inserts a user's pick for a week. Picks are permanent once submitted — no
+ * updates, ever — so this is insert-only with `on conflict do nothing`, and
+ * returns whether the row was actually inserted (false means they already
+ * had a pick, including a race between two near-simultaneous submissions).
+ */
+export async function insertPick(params: {
   userId: number;
   weekId: number;
   gameId: number;
@@ -183,17 +189,16 @@ export async function upsertPick(params: {
   pickedSide: "home" | "away" | "over" | "under";
   lockedLine: number;
   isDoubleDown: boolean;
-}) {
+}): Promise<boolean> {
   const { userId, weekId, gameId, pickType, pickedSide, lockedLine, isDoubleDown } = params;
-  await pool.query(
+  const { rows } = await pool.query(
     `insert into picks (user_id, week_id, game_id, pick_type, picked_side, locked_line, is_double_down, is_auto_pick)
      values ($1, $2, $3, $4, $5, $6, $7, false)
-     on conflict (user_id, week_id)
-     do update set
-       game_id = $3, pick_type = $4, picked_side = $5, locked_line = $6,
-       is_double_down = $7, is_auto_pick = false, updated_at = now()`,
+     on conflict (user_id, week_id) do nothing
+     returning id`,
     [userId, weekId, gameId, pickType, pickedSide, lockedLine, isDoubleDown]
   );
+  return rows.length > 0;
 }
 
 /** Assigns the punitive auto-pick for a user who missed the deadline. Returns false if a pick already existed. */

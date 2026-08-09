@@ -13,8 +13,9 @@ season-long double down to swing for more.
   10:00am Pacific — a fixed weekly window (not tied to when any specific
   game kicks off), correct across the PDT/PST transition since it's computed
   in the `America/Los_Angeles` zone rather than a fixed UTC offset (see
-  `lib/nflWeek.ts`). You can change your pick as many times as you want
-  within the window.
+  `lib/nflWeek.ts`). **A pick is permanent the instant you submit it** — no
+  changing your mind, even earlier in the week while the window's still
+  open.
 - **Miss the window and you get auto-picked**: at the Sunday cutoff, anyone
   without a pick is assigned the biggest underdog among that week's
   still-remaining games, with the line flipped (e.g. Panthers +14 becomes an
@@ -63,6 +64,9 @@ season-long double down to swing for more.
 7. `npm run dev` and visit `http://localhost:3000`.
 8. Trigger the first sync so there's a slate to pick from:
    `curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/sync-week`
+9. Since picks are permanent once submitted, `npm run reset-pick -- <name>` is
+   a local-only admin script for clearing your own test pick during
+   development — it's not exposed anywhere in the app itself.
 
 ## Deploying
 
