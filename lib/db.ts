@@ -104,10 +104,22 @@ export async function getWeekGames(weekId: number): Promise<Game[]> {
   return rows;
 }
 
-/** Games in this week that haven't kicked off yet — candidates for an auto-pick. */
+/**
+ * Games in this week that hadn't kicked off as of the week's own pick
+ * deadline — candidates for an auto-pick. Anchored to the week's
+ * pick_closes_at rather than the current time, since the sweep's cron can
+ * fire up to ~90 minutes after the real cutoff (Vercel Hobby only allows
+ * daily schedules); using "now" at sweep time would wrongly exclude the
+ * early Sunday slate, which always kicks off at the exact same instant as
+ * the cutoff (1pm ET = 10am PT). The comparison is inclusive for the same
+ * reason — a game starting exactly at the cutoff still counts as remaining.
+ */
 export async function getRemainingGamesForWeek(weekId: number): Promise<Game[]> {
   const { rows } = await pool.query<Game>(
-    `select * from games where week_id = $1 and commence_time > now() order by commence_time asc`,
+    `select g.* from games g
+     join weeks w on w.id = g.week_id
+     where g.week_id = $1 and g.commence_time >= w.pick_closes_at
+     order by g.commence_time asc`,
     [weekId]
   );
   return rows;
