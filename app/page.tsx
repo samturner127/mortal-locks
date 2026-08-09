@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getSession, clearSession } from "@/lib/session";
+import { getSession, clearSession, type Session } from "@/lib/session";
 
 type Week = {
   id: number;
@@ -45,7 +45,15 @@ type PoolPick = {
 
 export default function HomePage() {
   const router = useRouter();
-  const [session] = useState(getSession());
+  // session is read from localStorage, which doesn't exist during SSR — so
+  // it starts as a plain literal (null) that renders identically on the
+  // server and on React's first client pass, then gets populated client-only
+  // in an effect after mount. Reading it synchronously in useState's
+  // initializer (the old approach) causes a hydration mismatch whenever
+  // you're already logged in, since the server always sees no session but
+  // the client's first render would see the real one.
+  const [mounted, setMounted] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [weekId, setWeekId] = useState<number | null>(null);
   const [week, setWeek] = useState<Week | null>(null);
   const [games, setGames] = useState<Game[]>([]);
@@ -60,6 +68,12 @@ export default function HomePage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    setMounted(true);
+    setSession(getSession());
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     if (!session) {
       router.push("/login");
       return;
@@ -88,7 +102,7 @@ export default function HomePage() {
             .then((dd) => setDdUsedElsewhere(dd.usedElsewhere));
         }
       });
-  }, [session, router]);
+  }, [mounted, session, router]);
 
   if (!session) return null;
   if (!weekId || games.length === 0) {
