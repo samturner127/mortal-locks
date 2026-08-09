@@ -227,25 +227,28 @@ export default function HomePage() {
                 onClick={() => !locked && setSelectedGameId(g.id)}
                 disabled={locked}
                 className={
-                  "w-full text-left px-4 py-3 rounded-lg border transition flex items-center justify-between " +
+                  "w-full text-left px-4 py-3 rounded-lg border transition " +
                   (active
                     ? "border-amber bg-amber/10"
                     : "border-panelLine hover:border-mute") +
                   (locked ? " opacity-40 cursor-not-allowed" : "")
                 }
               >
-                <span className="font-display text-sm">
-                  {g.away_team} @ {g.home_team}
-                </span>
-                <span className="font-mono text-xs text-mute">
-                  {locked
-                    ? "Locked"
-                    : new Date(g.commence_time).toLocaleString(undefined, {
-                        weekday: "short",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="font-display text-sm">
+                    {g.away_team} @ {g.home_team}
+                  </span>
+                  <span className="font-mono text-xs text-mute">
+                    {locked
+                      ? "Locked"
+                      : new Date(g.commence_time).toLocaleString(undefined, {
+                          weekday: "short",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                  </span>
+                </div>
+                <div className="font-mono text-xs text-mute mt-1">{formatGameLine(g)}</div>
               </button>
             );
           })}
@@ -422,6 +425,22 @@ function SideButton({
 function formatSpread(v: number | null) {
   if (v === null) return "—";
   return v > 0 ? `+${v}` : String(v);
+}
+
+function formatGameLine(g: {
+  home_team: string;
+  away_team: string;
+  home_spread: number | null;
+  away_spread: number | null;
+  total: number | null;
+}) {
+  let spreadText = "—";
+  if (g.home_spread !== null && g.away_spread !== null) {
+    const favorite = g.home_spread <= g.away_spread ? { team: g.home_team, spread: g.home_spread } : { team: g.away_team, spread: g.away_spread };
+    spreadText = `${favorite.team} ${formatSpread(favorite.spread)}`;
+  }
+  const totalText = g.total !== null ? `O/U ${g.total}` : "—";
+  return `${spreadText} · ${totalText}`;
 }
 
 function describePick(p: {
