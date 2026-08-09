@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Oswald", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(245, 166, 35, 0.06), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(45, 212, 191, 0.05), transparent 45%);
+}
+
+/* Scoreboard-style number input: no spinner arrows, big mono digits */
+.score-input {
+  -moz-appearance: textfield;
+}
+.score-input::-webkit-outer-spin-button,
+.score-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
