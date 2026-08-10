@@ -166,7 +166,7 @@ export async function getPicksForWeek(
      join users u on u.id = p.user_id
      join games g on g.id = p.game_id
      where p.week_id = $1
-     order by u.name asc`,
+     order by p.created_at asc`,
     [weekId]
   );
   return rows;
