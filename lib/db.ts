@@ -243,6 +243,23 @@ export async function insertAutoPick(params: {
   return rows.length > 0;
 }
 
+/**
+ * Standings, plus who's clearly in first (crown) and clearly in last
+ * (toilet, since last place gets a refund). Last place is ranked by most
+ * losses / most pushes / fewest wins, but deliberately excluding auto-picks
+ * entirely from that calculation: once someone's mathematically eliminated,
+ * the easiest way to "tank" for the refund would be to just stop
+ * submitting and let the punitive auto-pick (guaranteed near-loss) pile up
+ * losses for them. Excluding auto-picks from the last-place math removes
+ * that shortcut — missing the deadline neither helps nor hurts your case
+ * for being in last, so getting there requires actually playing (and
+ * genuinely losing). Auto-picks still count fully against you in the
+ * normal (first-place) standings, unchanged — the punishment for missing a
+ * deadline is real, it just can't double as a strategy for last place.
+ * Each auto-pick also surfaces as `auto_pick_count` for a skull-per-miss
+ * indicator. `is_champion`/`is_last` are only true when that position is
+ * held outright — a full tie through all three tiebreakers suppresses both.
+ */
 export async function getStandings(): Promise<
   {
     name: string;
@@ -250,7 +267,10 @@ export async function getStandings(): Promise<
     losses: number;
     pushes: number;
     double_down_spent: boolean;
+    auto_pick_count: number;
     rank: number;
+    is_champion: boolean;
+    is_last: boolean;
   }[]
 > {
   const { rows } = await pool.query(
@@ -259,14 +279,25 @@ export async function getStandings(): Promise<
          coalesce(sum(case when p.result='win'  then (case when p.is_double_down then 2 else 1 end) else 0 end),0)::int as wins,
          coalesce(sum(case when p.result='loss' then (case when p.is_double_down then 2 else 1 end) else 0 end),0)::int as losses,
          coalesce(sum(case when p.result='push' then (case when p.is_double_down then 2 else 1 end) else 0 end),0)::int as pushes,
-         bool_or(p.is_double_down) as double_down_spent
+         bool_or(p.is_double_down) as double_down_spent,
+         coalesce(sum(case when p.is_auto_pick then 1 else 0 end),0)::int as auto_pick_count,
+         coalesce(sum(case when p.result='win'  and not p.is_auto_pick then (case when p.is_double_down then 2 else 1 end) else 0 end),0)::int as wins_excl_auto,
+         coalesce(sum(case when p.result='loss' and not p.is_auto_pick then (case when p.is_double_down then 2 else 1 end) else 0 end),0)::int as losses_excl_auto,
+         coalesce(sum(case when p.result='push' and not p.is_auto_pick then (case when p.is_double_down then 2 else 1 end) else 0 end),0)::int as pushes_excl_auto
        from users u
        left join picks p on p.user_id = u.id and p.result is not null
        group by u.id, u.name
+     ),
+     ranked as (
+       select *,
+         rank() over (order by wins desc, pushes desc, losses asc) as rank,
+         rank() over (order by losses_excl_auto desc, pushes_excl_auto desc, wins_excl_auto asc) as last_rank
+       from agg
      )
-     select name, wins, losses, pushes, double_down_spent,
-            rank() over (order by wins desc, pushes desc, losses asc) as rank
-     from agg
+     select name, wins, losses, pushes, double_down_spent, auto_pick_count, rank,
+       (rank = 1 and (select count(*) from ranked r2 where r2.rank = 1) = 1) as is_champion,
+       (last_rank = 1 and (select count(*) from ranked r2 where r2.last_rank = 1) = 1) as is_last
+     from ranked
      order by rank asc, name asc`
   );
   return rows;

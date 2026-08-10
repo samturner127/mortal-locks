@@ -8,7 +8,10 @@ type Row = {
   losses: number;
   pushes: number;
   double_down_spent: boolean;
+  auto_pick_count: number;
   rank: number;
+  is_champion: boolean;
+  is_last: boolean;
 };
 
 export default function LeaderboardPage() {
@@ -46,6 +49,13 @@ export default function LeaderboardPage() {
                   {tied ? `T-${r.rank}` : r.rank}
                 </span>
                 <span className="font-display text-lg">{r.name}</span>
+                {r.is_champion && <span title="In first">👑</span>}
+                {r.is_last && <span title="In last — refund territory">🚽</span>}
+                {r.auto_pick_count > 0 && (
+                  <span title={`Missed the deadline ${r.auto_pick_count}x`}>
+                    {"💀".repeat(r.auto_pick_count)}
+                  </span>
+                )}
                 {r.double_down_spent && (
                   <span className="font-mono text-[10px] tracking-widest2 uppercase text-loss/80 border border-loss/40 rounded px-1.5 py-0.5">
                     DD spent

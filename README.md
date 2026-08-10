@@ -24,6 +24,16 @@ season-long double down to swing for more.
 - Standings are a **W-L-P record**, not points. Season winner = most wins;
   tiebreak 1 = most pushes; tiebreak 2 = fewest losses; a full tie ends the
   season in a draw (split the pot).
+- **Last place also gets their money back**: most losses; tiebreak 1 = most
+  pushes; tiebreak 2 = fewest wins. Once someone's mathematically
+  eliminated, the whole point of the refund is to keep them engaged rather
+  than checked out — but auto-picks (missed deadlines) are excluded
+  entirely from this calculation, so simply not submitting can't be used as
+  a shortcut to "tank" for the refund. Auto-picks still count fully against
+  you in the normal (first-place) standings.
+- The standings page shows 👑 next to whoever's outright in first and 🚽
+  next to whoever's outright in last (suppressed for either if there's a
+  full tie), plus one 💀 per missed deadline.
 - Double down (once per season, on any single pick) doubles whatever
   happens: a win counts as **2 wins**, a loss as **2 losses**, a push as
   **2 pushes**. It's spent the moment you use it — including on a push,
