@@ -507,14 +507,14 @@ function LockAnimation() {
         ))}
       </div>
       <svg className="lock-anim-svg" viewBox="0 0 64 64" width="56" height="56">
-        <rect x="16" y="28" width="32" height="26" rx="6" fill="#F5A623" />
-        <circle cx="32" cy="40" r="4" fill="#0B1220" />
-        <rect x="30" y="42" width="4" height="8" rx="2" fill="#0B1220" />
+        <rect x="16" y="28" width="32" height="26" rx="6" fill="#E8432C" />
+        <circle cx="32" cy="40" r="4" fill="#0A0505" />
+        <rect x="30" y="42" width="4" height="8" rx="2" fill="#0A0505" />
         <path
           className="lock-anim-shackle"
           d="M22 28 V20 a10 10 0 0 1 20 0 V28"
           fill="none"
-          stroke="#F5A623"
+          stroke="#E8432C"
           strokeWidth="5"
           strokeLinecap="round"
         />

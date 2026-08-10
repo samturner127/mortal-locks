@@ -10,8 +10,8 @@
 
 body {
   background-image:
-    radial-gradient(circle at 20% 0%, rgba(245, 166, 35, 0.06), transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(45, 212, 191, 0.05), transparent 45%);
+    radial-gradient(circle at 20% 0%, rgba(232, 67, 44, 0.09), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(180, 24, 42, 0.07), transparent 45%);
 }
 
 /* Scoreboard-style number input: no spinner arrows, big mono digits */
@@ -63,13 +63,13 @@ body {
 @keyframes lock-glow {
   0%,
   40% {
-    filter: drop-shadow(0 0 0px rgba(245, 166, 35, 0));
+    filter: drop-shadow(0 0 0px rgba(232, 67, 44, 0));
   }
   60% {
-    filter: drop-shadow(0 0 14px rgba(245, 166, 35, 0.9));
+    filter: drop-shadow(0 0 14px rgba(232, 67, 44, 0.9));
   }
   100% {
-    filter: drop-shadow(0 0 4px rgba(245, 166, 35, 0.4));
+    filter: drop-shadow(0 0 4px rgba(232, 67, 44, 0.4));
   }
 }
 
@@ -88,7 +88,7 @@ body {
   width: 14px;
   height: 20px;
   border-radius: 60% 40% 60% 40% / 65% 40% 75% 40%;
-  background: linear-gradient(200deg, #f5a623, #e5484d 80%);
+  background: linear-gradient(200deg, #e8432c, #b4182a 80%);
   opacity: 0;
   transform: rotate(var(--angle)) translateY(0) scale(0.3);
   animation: flame-burst 0.9s ease-out forwards;
