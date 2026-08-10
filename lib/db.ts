@@ -302,3 +302,39 @@ export async function getStandings(): Promise<
   );
   return rows;
 }
+
+export type HistoryEntry = {
+  week_id: number;
+  pick_opens_at: string;
+  user_id: number;
+  name: string;
+  pick_type: "spread" | "total" | null;
+  picked_side: "home" | "away" | "over" | "under" | null;
+  locked_line: number | null;
+  result: "win" | "loss" | "push" | null;
+  is_auto_pick: boolean | null;
+  home_team: string | null;
+  away_team: string | null;
+};
+
+/**
+ * Every user's pick for every week that's ever existed, chronologically —
+ * the raw data behind the /history grid (weeks as columns, players as
+ * rows). One row per (week, user) pair, including users with no pick yet
+ * for a given week (left join), so the grid can render a blank cell rather
+ * than skipping them.
+ */
+export async function getHistoryGrid(): Promise<HistoryEntry[]> {
+  const { rows } = await pool.query<HistoryEntry>(
+    `select w.id as week_id, w.pick_opens_at,
+            u.id as user_id, u.name,
+            p.pick_type, p.picked_side, p.locked_line, p.result, p.is_auto_pick,
+            g.home_team, g.away_team
+     from weeks w
+     cross join users u
+     left join picks p on p.user_id = u.id and p.week_id = w.id
+     left join games g on g.id = p.game_id
+     order by w.pick_opens_at asc, u.name asc`
+  );
+  return rows;
+}

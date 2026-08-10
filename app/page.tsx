@@ -227,6 +227,9 @@ export default function HomePage() {
           <a href="/leaderboard" className="text-mute hover:text-ink transition">
             Leaderboard
           </a>
+          <a href="/history" className="text-mute hover:text-ink transition">
+            History
+          </a>
           <button
             onClick={() => {
               clearSession();

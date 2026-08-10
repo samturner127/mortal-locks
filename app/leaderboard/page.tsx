@@ -30,9 +30,14 @@ export default function LeaderboardPage() {
           <p className="font-mono text-xs tracking-widest2 text-amber uppercase">Mortal Locks</p>
           <h1 className="font-display text-2xl font-semibold">Standings</h1>
         </div>
-        <a href="/" className="text-mute hover:text-ink transition text-sm">
-          This week
-        </a>
+        <div className="flex gap-4 text-sm">
+          <a href="/history" className="text-mute hover:text-ink transition">
+            History
+          </a>
+          <a href="/" className="text-mute hover:text-ink transition">
+            This week
+          </a>
+        </div>
       </header>
 
       <div className="bg-panel border border-panelLine rounded-2xl shadow-board overflow-hidden">
