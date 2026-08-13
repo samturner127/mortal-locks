@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [selected, setSelected] = useState<number | "">("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     fetch("/api/users")
@@ -25,8 +26,23 @@ export default function LoginPage() {
     if (selected === "" || pin.length === 0) return;
 
     const user = users.find((u) => u.id === selected)!;
-    setSession({ userId: user.id, name: user.name, pin });
-    router.push("/");
+    setChecking(true);
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, pin }),
+      });
+      if (res.ok) {
+        setSession({ userId: user.id, name: user.name, pin });
+        router.push("/");
+      } else {
+        const d = await res.json();
+        setError(d.error ?? "Something went wrong.");
+      }
+    } finally {
+      setChecking(false);
+    }
   }
 
   return (
@@ -71,9 +87,10 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          className="w-full bg-amber text-field font-semibold rounded-md py-2 hover:opacity-90 transition"
+          disabled={checking}
+          className="w-full bg-amber text-field font-semibold rounded-md py-2 hover:opacity-90 transition disabled:opacity-50"
         >
-          Continue
+          {checking ? "Checking…" : "Continue"}
         </button>
       </form>
     </div>
