@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSession, clearSession, type Session } from "@/lib/session";
+import { describePickAbbrev } from "@/lib/pickFormat";
 
 type Week = {
   id: number;
@@ -477,7 +478,7 @@ export default function HomePage() {
             >
               <span className={p.user_id === session.userId ? "text-amber" : "text-ink"}>{p.name}</span>
               <span className="font-mono text-sm text-mute">
-                {describePick(p)}
+                {describePickAbbrev(p)}
                 {p.is_double_down && <span className="text-loss ml-1">2x</span>}
                 {p.is_auto_pick && <span className="text-mute ml-1 text-xs">(auto)</span>}
                 {p.result && (

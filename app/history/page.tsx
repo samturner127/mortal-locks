@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { abbreviateTeam } from "@/lib/teamAbbreviations";
+import { describePickAbbrev } from "@/lib/pickFormat";
 
 type Entry = {
   week_id: number;
@@ -128,7 +128,13 @@ function PickCell({ entry }: { entry: Entry | undefined }) {
     return <span className="text-mute text-xs">—</span>;
   }
 
-  const label = describePickAbbrev(entry);
+  const label = describePickAbbrev({
+    home_team: entry.home_team!,
+    away_team: entry.away_team!,
+    pick_type: entry.pick_type,
+    picked_side: entry.picked_side!,
+    locked_line: entry.locked_line!,
+  });
   const resultClass =
     entry.result === "win"
       ? "bg-teal/10 text-teal"
@@ -143,19 +149,4 @@ function PickCell({ entry }: { entry: Entry | undefined }) {
       {label}
     </span>
   );
-}
-
-function formatSpread(v: number) {
-  return v > 0 ? `+${v}` : String(v);
-}
-
-function describePickAbbrev(entry: Entry): string {
-  if (entry.pick_type === "spread") {
-    const team = entry.picked_side === "home" ? entry.home_team! : entry.away_team!;
-    return `${abbreviateTeam(team)} ${formatSpread(entry.locked_line!)}`;
-  }
-  // total
-  const homeAbbrev = abbreviateTeam(entry.home_team!);
-  const side = entry.picked_side === "over" ? "O" : "U";
-  return `${homeAbbrev} ${side} ${entry.locked_line}`;
 }
