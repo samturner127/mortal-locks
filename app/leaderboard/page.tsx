@@ -76,9 +76,23 @@ export default function LeaderboardPage() {
           );
         })}
         {rows?.length === 0 && <p className="p-6 text-mute text-sm">No graded weeks yet.</p>}
+        {rows && rows.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 bg-field/60">
+            <span className="font-display text-lg text-mute">The Squad</span>
+            <div className="flex items-center gap-4 font-mono text-sm">
+              <Stat label="W" value={sum(rows, "wins")} className="text-teal" />
+              <Stat label="L" value={sum(rows, "losses")} className="text-loss" />
+              <Stat label="P" value={sum(rows, "pushes")} className="text-mute" />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
+}
+
+function sum(rows: Row[], key: "wins" | "losses" | "pushes") {
+  return rows.reduce((total, r) => total + r[key], 0);
 }
 
 function Stat({ label, value, className }: { label: string; value: number; className: string }) {
