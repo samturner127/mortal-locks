@@ -56,11 +56,6 @@ export default function LeaderboardPage() {
                 <span className="font-display text-lg">{r.name}</span>
                 {r.is_champion && <span title="In first">👑</span>}
                 {r.is_last && <span title="In last — refund territory">🚽</span>}
-                {r.auto_pick_count > 0 && (
-                  <span title={`Missed the deadline ${r.auto_pick_count}x`}>
-                    {"💀".repeat(r.auto_pick_count)}
-                  </span>
-                )}
                 {r.double_down_spent && (
                   <span className="font-mono text-[10px] tracking-widest2 uppercase text-loss/80 border border-loss/40 rounded px-1.5 py-0.5">
                     DD spent
