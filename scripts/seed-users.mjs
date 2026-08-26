@@ -17,7 +17,7 @@ const FRIENDS = [
   { name: "Glass", pin: "1011" },
   { name: "Neek", pin: "1012" },
   { name: "Jimmy", pin: "1013" },
-  { name: "Dlou", pin: "1014" },
+  { name: "D Loo", pin: "1014" },
 ];
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
