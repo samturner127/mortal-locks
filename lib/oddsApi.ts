@@ -86,7 +86,18 @@ export async function fetchWeekGames(): Promise<WeekGame[]> {
         awaySpread: awayOutcome?.point ?? null,
         total: totalsMarket?.outcomes?.[0]?.point ?? null,
       };
-    });
+    })
+    // Drop anything DraftKings hasn't priced at all. The aggregator
+    // sometimes carries phantom events — duplicate listings of a real game
+    // at a wrong kickoff time, which no book ever posts a line for. Those
+    // are unpickable by definition (every market resolves to null, and
+    // /api/picks rejects a null line), so they have no business in the
+    // slate. Self-healing: if a line shows up later, the next daily sync
+    // inserts the game normally.
+    //
+    // Deliberately keeps partially-priced games — a spread but no total, or
+    // vice versa — since those are still pickable on the market that exists.
+    .filter((g) => g.homeSpread !== null || g.awaySpread !== null || g.total !== null);
 }
 
 /** Pulls final/live scores for games from the last few days, to grade picks. */

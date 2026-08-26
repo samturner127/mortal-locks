@@ -97,9 +97,22 @@ export async function getCurrentWeekId(): Promise<number | null> {
   return upcoming.rows[0]?.id ?? null;
 }
 
+/**
+ * This week's slate, excluding anything with no DraftKings line on any
+ * market. `fetchWeekGames` already filters those at ingest, but this is the
+ * backstop that also retires rows written before that filter existed (and
+ * any game the provider later blanks out).
+ *
+ * Safe to filter here even though this backs pick submission as well as
+ * display: a pick can't exist on a game with no lines, since /api/picks
+ * refuses to store a null locked_line.
+ */
 export async function getWeekGames(weekId: number): Promise<Game[]> {
   const { rows } = await pool.query<Game>(
-    `select * from games where week_id = $1 order by commence_time asc`,
+    `select * from games
+     where week_id = $1
+       and (home_spread is not null or away_spread is not null or total is not null)
+     order by commence_time asc`,
     [weekId]
   );
   return rows;
