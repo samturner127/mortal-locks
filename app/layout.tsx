@@ -1,9 +1,22 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Mortal Locks",
   description: "Pick the line. Own the board.",
+  // Everyone in the pool runs this from their phone's home screen, so it
+  // gets the standalone-app treatment rather than looking like a bookmark.
+  appleWebApp: { capable: true, title: "Mortal Locks", statusBarStyle: "black-translucent" },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  // Matches the `field` token, so the phone's status/URL bar blends into the
+  // page instead of banding across the top.
+  themeColor: "#08090C",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

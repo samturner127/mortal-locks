@@ -5,14 +5,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        field: "#0B1220",      // deep navy background, like a night game
-        panel: "#121B2E",      // card / scoreboard surface
-        panelLine: "#233047",  // hairline borders on panels
-        ink: "#E8EDF5",        // primary text
-        mute: "#5B6B84",       // secondary text
-        amber: "#F5A623",      // scoreboard amber — primary accent
-        teal: "#2DD4BF",       // win / correct indicator
-        loss: "#E5484D",       // loss / miss indicator
+        field: "#08090C",      // near-black, so the ember accent actually glows
+        panel: "#131419",      // card / scoreboard surface
+        panelLine: "#262931",  // hairline borders on panels
+        ink: "#F2EFE9",        // primary text — warm off-white, not blue-white
+        mute: "#7C818C",       // secondary text (AA on both field and panel)
+        amber: "#FF7A18",      // ember orange — primary accent
+        teal: "#3FB950",       // win / correct indicator
+        loss: "#EE4B48",       // loss / miss indicator — the only other loud color
+        onLoss: "#1F2024",     // text laid on top of a loss-red fill
+        blue: "#58A6FF",       // a double down that came in
       },
       fontFamily: {
         display: ["var(--font-display)", "sans-serif"],
@@ -23,7 +25,7 @@ const config: Config = {
         widest2: "0.18em",
       },
       boxShadow: {
-        board: "0 0 0 1px #233047, 0 20px 40px -20px rgba(0,0,0,0.6)",
+        board: "0 0 0 1px #262931, 0 24px 48px -24px rgba(0,0,0,0.8)",
       },
     },
   },

@@ -326,6 +326,7 @@ export type HistoryEntry = {
   locked_line: number | null;
   result: "win" | "loss" | "push" | null;
   is_auto_pick: boolean | null;
+  is_double_down: boolean | null;
   home_team: string | null;
   away_team: string | null;
 };
@@ -341,7 +342,7 @@ export async function getHistoryGrid(): Promise<HistoryEntry[]> {
   const { rows } = await pool.query<HistoryEntry>(
     `select w.id as week_id, w.pick_opens_at,
             u.id as user_id, u.name,
-            p.pick_type, p.picked_side, p.locked_line, p.result, p.is_auto_pick,
+            p.pick_type, p.picked_side, p.locked_line, p.result, p.is_auto_pick, p.is_double_down,
             g.home_team, g.away_team
      from weeks w
      cross join users u

@@ -13,6 +13,7 @@ type Entry = {
   locked_line: number | null;
   result: "win" | "loss" | "push" | null;
   is_auto_pick: boolean | null;
+  is_double_down: boolean | null;
   home_team: string | null;
   away_team: string | null;
 };
@@ -135,11 +136,19 @@ function PickCell({ entry }: { entry: Entry | undefined }) {
     picked_side: entry.picked_side!,
     locked_line: entry.locked_line!,
   });
+  // A settled double down gets its own two colours rather than the usual
+  // green/red, so the weeks someone swung big stand out of the grid at a
+  // glance: blue for one that came in, ember for one that didn't.
+  const doubled = !!entry.is_double_down;
   const resultClass =
     entry.result === "win"
-      ? "bg-teal/10 text-teal"
+      ? doubled
+        ? "bg-blue/10 text-blue"
+        : "bg-teal/10 text-teal"
       : entry.result === "loss"
-      ? "bg-loss/10 text-loss"
+      ? doubled
+        ? "bg-amber/10 text-amber"
+        : "bg-loss/10 text-loss"
       : entry.result === "push"
       ? "bg-mute/10 text-mute"
       : "text-ink";
