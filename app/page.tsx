@@ -274,7 +274,7 @@ export default function HomePage() {
 
       {/* Game slate */}
       <div className="bg-panel border border-panelLine rounded-2xl shadow-board p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col gap-1 mb-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-mono text-[11px] tracking-widest2 text-mute uppercase">
             This week&apos;s slate — pick one
           </p>
@@ -299,10 +299,17 @@ export default function HomePage() {
                   (locked ? " opacity-40 cursor-not-allowed" : "")
                 }
               >
+                {/* Always breaks after the "@". Full team names don't fit on
+                    one phone-width line, and letting them wrap on their own
+                    broke in a different place on every row. The kickoff time
+                    sits beside the home team rather than the away team so the
+                    first line gets the full width — "Washington Commanders @"
+                    is the longest and only just fits. */}
+                <span className="font-display text-sm tracking-wide block">
+                  {g.away_team} <span className="text-mute">@</span>
+                </span>
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-display text-sm tracking-wide">
-                    {g.away_team} <span className="text-mute">@</span> {g.home_team}
-                  </span>
+                  <span className="font-display text-sm tracking-wide">{g.home_team}</span>
                   <span className="font-mono text-xs text-mute tabular-nums whitespace-nowrap">
                     {locked
                       ? "Locked"
@@ -554,13 +561,13 @@ function DeadlineClock({ opensAt, closesAt }: { opensAt: number; closesAt: numbe
   const urgent = open && remaining < 24 * 60 * 60 * 1000;
 
   return (
-    <div className="text-right">
-      <p className="font-mono text-[10px] tracking-widest2 text-mute uppercase">
+    <div className="text-left sm:text-right">
+      <p className="font-mono text-[10px] tracking-widest2 text-mute uppercase whitespace-nowrap">
         {open ? "Picks close in" : "Picks open in"}
       </p>
       <p
         className={
-          "font-mono text-sm tabular-nums " +
+          "font-mono text-sm tabular-nums whitespace-nowrap " +
           (urgent ? "text-loss countdown-urgent" : "text-ink")
         }
       >
