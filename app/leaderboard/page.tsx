@@ -25,16 +25,16 @@ export default function LeaderboardPage() {
 
   return (
     <div>
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between gap-3 mb-8">
         <div>
           <p className="font-mono text-xs tracking-widest2 text-amber uppercase">Mortal Locks</p>
           <h1 className="font-display text-2xl font-semibold">Standings</h1>
         </div>
-        <div className="flex gap-4 text-sm">
-          <a href="/history" className="text-mute hover:text-ink transition">
-            History
+        <div className="flex gap-3 text-xs shrink-0 sm:gap-4 sm:text-sm">
+          <a href="/history" className="text-mute hover:text-ink transition whitespace-nowrap">
+            Lock Log
           </a>
-          <a href="/" className="text-mute hover:text-ink transition">
+          <a href="/" className="text-mute hover:text-ink transition whitespace-nowrap">
             This week
           </a>
         </div>

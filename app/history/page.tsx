@@ -61,23 +61,23 @@ export default function HistoryPage() {
 
   return (
     <div>
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between gap-3 mb-8">
         <div>
           <p className="font-mono text-xs tracking-widest2 text-amber uppercase">Mortal Locks</p>
-          <h1 className="font-display text-2xl font-semibold">History</h1>
+          <h1 className="font-display text-2xl font-semibold">Lock Log</h1>
         </div>
-        <div className="flex gap-4 text-sm">
-          <a href="/leaderboard" className="text-mute hover:text-ink transition">
+        <div className="flex gap-3 text-xs shrink-0 sm:gap-4 sm:text-sm">
+          <a href="/leaderboard" className="text-mute hover:text-ink transition whitespace-nowrap">
             Leaderboard
           </a>
-          <a href="/" className="text-mute hover:text-ink transition">
+          <a href="/" className="text-mute hover:text-ink transition whitespace-nowrap">
             This week
           </a>
         </div>
       </header>
 
       <div className="bg-panel border border-panelLine rounded-2xl shadow-board overflow-hidden">
-        {entries === null && <p className="p-6 text-mute font-mono text-sm">Loading history…</p>}
+        {entries === null && <p className="p-6 text-mute font-mono text-sm">Loading the log…</p>}
         {entries !== null && weeks.length === 0 && (
           <p className="p-6 text-mute text-sm">No weeks yet.</p>
         )}

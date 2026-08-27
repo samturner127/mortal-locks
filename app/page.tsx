@@ -220,26 +220,26 @@ export default function HomePage() {
 
   return (
     <div>
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between gap-3 mb-8">
         <div>
           <p className="font-mono text-xs tracking-widest2 text-amber uppercase">Mortal Locks</p>
           <h1 className="font-display text-2xl font-semibold">Hey {session.name.split(" ")[0]}</h1>
         </div>
-        <div className="flex gap-4 text-sm">
-          <a href="/leaderboard" className="text-mute hover:text-ink transition">
+        <div className="flex gap-3 text-xs shrink-0 sm:gap-4 sm:text-sm">
+          <a href="/leaderboard" className="text-mute hover:text-ink transition whitespace-nowrap">
             Leaderboard
           </a>
-          <a href="/history" className="text-mute hover:text-ink transition">
-            History
+          <a href="/history" className="text-mute hover:text-ink transition whitespace-nowrap">
+            Lock Log
           </a>
           <button
             onClick={() => {
               clearSession();
               router.push("/login");
             }}
-            className="text-mute hover:text-ink transition"
+            className="text-mute hover:text-ink transition whitespace-nowrap"
           >
-            Switch
+            Logout
           </button>
         </div>
       </header>
@@ -292,25 +292,23 @@ export default function HomePage() {
                 onClick={() => !locked && setSelectedGameId(g.id)}
                 disabled={locked}
                 className={
-                  "w-full text-left px-4 py-3 rounded-lg border transition " +
+                  "w-full text-left px-3 sm:px-4 py-3 rounded-lg border transition " +
                   (active
                     ? "border-amber bg-amber/10"
                     : "border-panelLine hover:border-mute") +
                   (locked ? " opacity-40 cursor-not-allowed" : "")
                 }
               >
-                {/* Always breaks after the "@". Full team names don't fit on
-                    one phone-width line, and letting them wrap on their own
-                    broke in a different place on every row. The kickoff time
-                    sits beside the home team rather than the away team so the
-                    first line gets the full width — "Washington Commanders @"
-                    is the longest and only just fits. */}
-                <span className="font-display text-sm tracking-wide block">
-                  {g.away_team} <span className="text-mute">@</span>
-                </span>
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-display text-sm tracking-wide">{g.home_team}</span>
-                  <span className="font-mono text-xs text-mute tabular-nums whitespace-nowrap">
+                {/* Matchup always breaks after the "@" — full team names don't
+                    fit on one phone-width line, and letting them wrap on their
+                    own broke in a different place on every row. The kickoff
+                    time sits on the first line; "Washington Commanders @" is
+                    the league's longest and is what the widths are tuned to. */}
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-display text-sm">
+                    {g.away_team} <span className="text-mute">@</span>
+                  </span>
+                  <span className="font-mono text-[11px] text-mute tabular-nums whitespace-nowrap">
                     {locked
                       ? "Locked"
                       : new Date(g.commence_time).toLocaleString(undefined, {
@@ -320,6 +318,7 @@ export default function HomePage() {
                         })}
                   </span>
                 </div>
+                <span className="font-display text-sm block">{g.home_team}</span>
                 <div className="flex items-baseline justify-between gap-3 mt-1 font-mono text-xs tabular-nums">
                   <span className="text-ink">{formatFavorite(g)}</span>
                   <span className="text-mute">{formatTotal(g)}</span>
