@@ -342,7 +342,7 @@ export default function HomePage() {
             <p className="text-mute text-xs mt-3">
               {myPick.is_auto_pick
                 ? "You missed the cutoff — this was auto-assigned."
-                : "No changes once submitted."}
+                : pickCommentary(myPick)}
             </p>
           </div>
         ) : windowOpen && !gameLocked ? (
@@ -695,6 +695,42 @@ function formatFavorite(g: {
 
 function formatTotal(g: { total: number | null }) {
   return g.total !== null ? `O/U ${g.total}` : "—";
+}
+
+const PATRIOTS = "New England Patriots";
+const LIONS = "Detroit Lions";
+
+/**
+ * Swaps the usual "No changes once submitted." footnote for a bit of
+ * commentary on certain picks. Checked in order, first match wins — so a
+ * Patriots–Lions game gets a Patriots line rather than the Lions one.
+ *
+ * Only ever fires on a pick someone actually made: auto-picks keep the
+ * message explaining they missed the cutoff, since none of this is a
+ * comment on a choice they made.
+ */
+function pickCommentary(p: {
+  home_team: string;
+  away_team: string;
+  pick_type: PickType;
+  picked_side: PickedSide;
+}): string {
+  if (p.pick_type === "spread") {
+    const backed = p.picked_side === "home" ? p.home_team : p.away_team;
+    const faded = p.picked_side === "home" ? p.away_team : p.home_team;
+
+    if (backed === PATRIOTS) return "Now here's a guy that knows ball!";
+    if (faded === PATRIOTS) return "What are you some kind of idiot?";
+    if (backed === LIONS || faded === LIONS) {
+      return "Did you check what lunar phase the moon is in?";
+    }
+  }
+
+  if (p.pick_type === "total" && p.picked_side === "under") {
+    return "Life is too long anyways.";
+  }
+
+  return "No changes once submitted.";
 }
 
 function describePick(p: {
