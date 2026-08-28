@@ -342,7 +342,7 @@ export default function HomePage() {
             <p className="text-mute text-xs mt-3">
               {myPick.is_auto_pick
                 ? "You missed the cutoff — this was auto-assigned."
-                : pickCommentary(myPick)}
+                : pickCommentary(myPick, myPick.game_id === games[0].id)}
             </p>
           </div>
         ) : windowOpen && !gameLocked ? (
@@ -699,36 +699,40 @@ function formatTotal(g: { total: number | null }) {
 
 const PATRIOTS = "New England Patriots";
 const LIONS = "Detroit Lions";
+const BRONCOS = "Denver Broncos";
+const BEARS = "Chicago Bears";
 
 /**
  * Swaps the usual "No changes once submitted." footnote for a bit of
- * commentary on certain picks. Checked in order, first match wins — so a
- * Patriots–Lions game gets a Patriots line rather than the Lions one.
+ * commentary on certain picks. Strictly ordered — the first match wins, so a
+ * Patriots-Lions game gets a Patriots line, and the under on the week's
+ * opener gets the under line rather than the opener one.
  *
- * Only ever fires on a pick someone actually made: auto-picks keep the
- * message explaining they missed the cutoff, since none of this is a
- * comment on a choice they made.
+ * `backed`/`faded` are null on a total, which is what keeps the team rules
+ * from firing on an over/under: you can't be for or against a team on a
+ * number. Only ever runs on a pick someone actually made — auto-picks keep
+ * the message explaining they missed the cutoff.
  */
-function pickCommentary(p: {
-  home_team: string;
-  away_team: string;
-  pick_type: PickType;
-  picked_side: PickedSide;
-}): string {
-  if (p.pick_type === "spread") {
-    const backed = p.picked_side === "home" ? p.home_team : p.away_team;
-    const faded = p.picked_side === "home" ? p.away_team : p.home_team;
+function pickCommentary(
+  p: {
+    home_team: string;
+    away_team: string;
+    pick_type: PickType;
+    picked_side: PickedSide;
+  },
+  isFirstGame: boolean
+): string {
+  const isSpread = p.pick_type === "spread";
+  const backed = isSpread ? (p.picked_side === "home" ? p.home_team : p.away_team) : null;
+  const faded = isSpread ? (p.picked_side === "home" ? p.away_team : p.home_team) : null;
 
-    if (backed === PATRIOTS) return "Now here's a guy that knows ball!";
-    if (faded === PATRIOTS) return "What are you some kind of idiot?";
-    if (backed === LIONS || faded === LIONS) {
-      return "Did you check what lunar phase the moon is in?";
-    }
-  }
-
-  if (p.pick_type === "total" && p.picked_side === "under") {
-    return "Life is too long anyways.";
-  }
+  if (backed === PATRIOTS) return "Now here's a guy that knows ball!";
+  if (faded === PATRIOTS) return "What are you some kind of idiot?";
+  if (backed === LIONS || faded === LIONS) return "Did you check what lunar phase the moon is in?";
+  if (p.pick_type === "total" && p.picked_side === "under") return "Life is too long anyways.";
+  if (backed === BRONCOS) return "Don't forget to wake up Bart for this.";
+  if (isFirstGame) return "Fortune favors the bold.";
+  if (backed === BEARS) return "Mmmmmm zesty!";
 
   return "No changes once submitted.";
 }
