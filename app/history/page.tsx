@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { describePickAbbrev } from "@/lib/pickFormat";
+import { getSession, type Session } from "@/lib/session";
 
 type Entry = {
   week_id: number;
@@ -23,8 +24,12 @@ const PLAYOFF_LABELS = ["WC", "DIV", "CONF", "SB"];
 
 export default function HistoryPage() {
   const [entries, setEntries] = useState<Entry[] | null>(null);
+  // Read client-side only — localStorage doesn't exist during SSR, and the
+  // grid isn't rendered until its fetch resolves anyway.
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
+    setSession(getSession());
     fetch("/api/history")
       .then((r) => r.json())
       .then((d) => setEntries(d.entries));
@@ -102,7 +107,12 @@ export default function HistoryPage() {
               <tbody>
                 {players.map((player) => (
                   <tr key={player.id} className="border-b border-panelLine last:border-0">
-                    <td className="sticky left-0 bg-panel px-4 py-2 font-display text-sm border-r border-panelLine whitespace-nowrap">
+                    <td
+                      className={
+                        "sticky left-0 bg-panel px-4 py-2 font-display text-sm border-r border-panelLine whitespace-nowrap " +
+                        (player.id === session?.userId ? "text-amber" : "")
+                      }
+                    >
                       {player.name}
                     </td>
                     {weeks.map((weekId) => {

@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getSession, type Session } from "@/lib/session";
 
 type Row = {
+  id: number;
   name: string;
   wins: number;
   losses: number;
@@ -16,8 +18,12 @@ type Row = {
 
 export default function LeaderboardPage() {
   const [rows, setRows] = useState<Row[] | null>(null);
+  // Read client-side only — localStorage doesn't exist during SSR, and the
+  // rows aren't rendered until their fetch resolves anyway.
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
+    setSession(getSession());
     fetch("/api/leaderboard")
       .then((r) => r.json())
       .then((d) => setRows(d.standings));
@@ -53,7 +59,14 @@ export default function LeaderboardPage() {
                 <span className="font-mono text-sm text-mute w-8">
                   {tied ? `T-${r.rank}` : r.rank}
                 </span>
-                <span className="font-display text-lg">{r.name}</span>
+                <span
+                  className={
+                    "font-display text-lg " +
+                    (r.id === session?.userId ? "text-amber" : "")
+                  }
+                >
+                  {r.name}
+                </span>
                 {r.is_champion && <span title="In first">👑</span>}
                 {r.is_last && <span title="In last — refund territory">🚽</span>}
                 {r.double_down_spent && (

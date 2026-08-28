@@ -275,6 +275,7 @@ export async function insertAutoPick(params: {
  */
 export async function getStandings(): Promise<
   {
+    id: number;
     name: string;
     wins: number;
     losses: number;
@@ -307,7 +308,7 @@ export async function getStandings(): Promise<
          rank() over (order by losses_excl_auto desc, pushes_excl_auto desc, wins_excl_auto asc) as last_rank
        from agg
      )
-     select name, wins, losses, pushes, double_down_spent, auto_pick_count, rank,
+     select id, name, wins, losses, pushes, double_down_spent, auto_pick_count, rank,
        (rank = 1 and (select count(*) from ranked r2 where r2.rank = 1) = 1) as is_champion,
        (last_rank = 1 and (select count(*) from ranked r2 where r2.last_rank = 1) = 1) as is_last
      from ranked
