@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { describePickAbbrev } from "@/lib/pickFormat";
 import { getSession, type Session } from "@/lib/session";
+import { weekColumnLabel } from "@/lib/weekLabels";
 
 type Entry = {
   week_id: number;
@@ -18,9 +19,6 @@ type Entry = {
   home_team: string | null;
   away_team: string | null;
 };
-
-// Columns beyond the 18-week regular season are the playoffs, in order.
-const PLAYOFF_LABELS = ["WC", "DIV", "CONF", "SB"];
 
 export default function HistoryPage() {
   const [entries, setEntries] = useState<Entry[] | null>(null);
@@ -59,11 +57,6 @@ export default function HistoryPage() {
     return { weeks: weekIds, players: playerList, grid: g };
   }, [entries]);
 
-  function weekLabel(index: number) {
-    if (index < 18) return `Wk ${index + 1}`;
-    return PLAYOFF_LABELS[index - 18] ?? `Wk ${index + 1}`;
-  }
-
   return (
     <div>
       <header className="flex items-center justify-between gap-3 mb-8">
@@ -99,7 +92,7 @@ export default function HistoryPage() {
                       key={weekId}
                       className="px-3 py-3 text-center font-mono text-[10px] tracking-widest2 text-mute uppercase border-b border-panelLine whitespace-nowrap"
                     >
-                      {weekLabel(i)}
+                      {weekColumnLabel(i)}
                     </th>
                   ))}
                 </tr>

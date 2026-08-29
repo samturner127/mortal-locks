@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getSession, clearSession, type Session } from "@/lib/session";
 import { describePickAbbrev } from "@/lib/pickFormat";
 import { abbreviateTeam } from "@/lib/teamAbbreviations";
+import { weekTitle } from "@/lib/weekLabels";
 
 type Week = {
   id: number;
@@ -278,7 +279,7 @@ export default function HomePage() {
       <div className="bg-panel border border-panelLine rounded-2xl shadow-board p-6 mb-6">
         <div className="flex flex-col gap-1 mb-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-mono text-[11px] tracking-widest2 text-mute uppercase">
-            {week ? `Week ${week.ordinal} slate — lock in` : "This week's slate — lock in"}
+            {week ? `${weekTitle(week.ordinal)} slate — lock in` : "This week's slate — lock in"}
           </p>
           {opensAt !== null && closesAt !== null && (
             <DeadlineClock opensAt={opensAt} closesAt={closesAt} />
