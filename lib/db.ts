@@ -24,6 +24,14 @@ export type Week = {
   week_number: number;
   pick_opens_at: string;
   pick_closes_at: string;
+  /**
+   * 1-based position among all weeks, in kickoff order — the pool's own
+   * week count, not the NFL's. `week_number` comes from computeNflWeek and
+   * carries the real calendar week (35 during preseason), which isn't what
+   * anyone in the group counts by. Ordered by pick_opens_at to match the
+   * Lock Log's columns, so "Week 3" here and "Wk 3" there are the same week.
+   */
+  ordinal: number;
 };
 
 export type Game = {
@@ -66,7 +74,13 @@ export async function getUserById(id: number): Promise<User | null> {
 }
 
 export async function getWeek(weekId: number): Promise<Week | null> {
-  const { rows } = await pool.query<Week>(`select * from weeks where id = $1`, [weekId]);
+  const { rows } = await pool.query<Week>(
+    `select w.*,
+            (select count(*)::int from weeks w2 where w2.pick_opens_at <= w.pick_opens_at) as ordinal
+     from weeks w
+     where w.id = $1`,
+    [weekId]
+  );
   return rows[0] ?? null;
 }
 

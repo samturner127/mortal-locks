@@ -12,6 +12,8 @@ type Week = {
   week_number: number;
   pick_opens_at: string;
   pick_closes_at: string;
+  /** The pool's own week count, not the NFL's — see lib/db.ts. */
+  ordinal: number;
 };
 
 type Game = {
@@ -276,7 +278,7 @@ export default function HomePage() {
       <div className="bg-panel border border-panelLine rounded-2xl shadow-board p-6 mb-6">
         <div className="flex flex-col gap-1 mb-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-mono text-[11px] tracking-widest2 text-mute uppercase">
-            This week&apos;s slate — pick one
+            {week ? `Week ${week.ordinal} slate — lock in` : "This week's slate — lock in"}
           </p>
           {opensAt !== null && closesAt !== null && (
             <DeadlineClock opensAt={opensAt} closesAt={closesAt} />
