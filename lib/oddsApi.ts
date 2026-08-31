@@ -10,7 +10,7 @@
  */
 
 const API_KEY = process.env.ODDS_API_KEY;
-const SPORT = "americanfootball_nfl_preseason"; // TEMP: testing with live preseason games, revert to "americanfootball_nfl" before real use
+const SPORT = "americanfootball_nfl";
 const BASE = "https://api.the-odds-api.com/v4";
 
 export type WeekGame = {

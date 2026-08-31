@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "db:init": "node scripts/seed-users.mjs",
-    "reset-pick": "node scripts/reset-pick.mjs"
+    "reset-pick": "node scripts/reset-pick.mjs",
+    "season:reset": "node scripts/reset-season.mjs"
   },
   "dependencies": {
     "dotenv": "16.4.5",
