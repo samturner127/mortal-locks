@@ -64,6 +64,7 @@ export default function HomePage() {
   const [games, setGames] = useState<Game[]>([]);
   const [poolPicks, setPoolPicks] = useState<PoolPick[]>([]);
   const [ddUsedElsewhere, setDdUsedElsewhere] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
   const [pickType, setPickType] = useState<PickType>("spread");
@@ -92,6 +93,7 @@ export default function HomePage() {
     fetch("/api/games")
       .then((r) => r.json())
       .then((d) => {
+        setLoaded(true);
         setWeekId(d.weekId);
         setWeek(d.week);
         setGames(d.games);
@@ -116,8 +118,79 @@ export default function HomePage() {
   }, [mounted, session, router]);
 
   if (!session) return null;
+
+  // An empty slate is a real state, not a loading one — between seasons, and
+  // in the days before the odds feed's 8-day window reaches the next week's
+  // games, there genuinely is nothing to show. Both keep the header so the
+  // rest of the app stays reachable.
+  if (!loaded) {
+    return (
+      <div>
+      <header className="flex items-center justify-between gap-3 mb-8">
+        <div>
+          <p className="font-mono text-xs tracking-widest2 text-amber uppercase">Mortal Locks</p>
+          <h1 className="font-display text-2xl font-semibold">Hey {session.name.split(" ")[0]}</h1>
+        </div>
+        <div className="flex gap-3 text-xs shrink-0 sm:gap-4 sm:text-sm">
+          <a href="/leaderboard" className="text-mute hover:text-ink transition whitespace-nowrap">
+            Leaderboard
+          </a>
+          <a href="/history" className="text-mute hover:text-ink transition whitespace-nowrap">
+            Lock Log
+          </a>
+          <button
+            onClick={() => {
+              clearSession();
+              router.push("/login");
+            }}
+            className="text-mute hover:text-ink transition whitespace-nowrap"
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+        <p className="text-mute font-mono text-sm">Loading this week&apos;s slate…</p>
+      </div>
+    );
+  }
+
   if (!weekId || games.length === 0) {
-    return <p className="text-mute font-mono text-sm">Loading this week&apos;s slate…</p>;
+    return (
+      <div>
+      <header className="flex items-center justify-between gap-3 mb-8">
+        <div>
+          <p className="font-mono text-xs tracking-widest2 text-amber uppercase">Mortal Locks</p>
+          <h1 className="font-display text-2xl font-semibold">Hey {session.name.split(" ")[0]}</h1>
+        </div>
+        <div className="flex gap-3 text-xs shrink-0 sm:gap-4 sm:text-sm">
+          <a href="/leaderboard" className="text-mute hover:text-ink transition whitespace-nowrap">
+            Leaderboard
+          </a>
+          <a href="/history" className="text-mute hover:text-ink transition whitespace-nowrap">
+            Lock Log
+          </a>
+          <button
+            onClick={() => {
+              clearSession();
+              router.push("/login");
+            }}
+            className="text-mute hover:text-ink transition whitespace-nowrap"
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+        <div className="bg-panel border border-panelLine rounded-2xl shadow-board p-6 text-center">
+          <p className="font-mono text-[11px] tracking-widest2 text-mute uppercase mb-2">
+            No slate yet
+          </p>
+          <p className="text-sm">Nothing on the board right now.</p>
+          <p className="text-mute text-xs mt-2">
+            The week&apos;s games show up here once DraftKings posts their lines.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   const selectedGame = games.find((g) => g.id === selectedGameId) ?? games[0];
