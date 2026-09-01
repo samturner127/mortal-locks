@@ -1,34 +1,54 @@
 // Usage: node scripts/seed-users.mjs
-// Edit the FRIENDS list below, then run once after schema.sql has been applied.
+// Edit the NAMES list below, then run to add anyone missing.
+//
+// No PINs here on purpose. This repo is public, so a PIN written into it is
+// readable by anyone — new users get a random one, printed once on the way
+// past. Use scripts/reset-pins.mjs to rotate everybody's.
+import { randomInt } from "node:crypto";
 import pg from "pg";
 import "dotenv/config";
 
-const FRIENDS = [
-  { name: "Tuna", pin: "1001" },
-  { name: "Parry", pin: "1002" },
-  { name: "Cam", pin: "1003" },
-  { name: "Gabe", pin: "1004" },
-  { name: "Stew", pin: "1005" },
-  { name: "Bart", pin: "1006" },
-  { name: "Kyle", pin: "1007" },
-  { name: "White Kyle", pin: "1008" },
-  { name: "Max", pin: "1009" },
-  { name: "Caleb", pin: "1010" },
-  { name: "Glass", pin: "1011" },
-  { name: "Neek", pin: "1012" },
-  { name: "Jimmy", pin: "1013" },
-  { name: "D Loo", pin: "1014" },
+const NAMES = [
+  "Tuna",
+  "Parry",
+  "Cam",
+  "Gabe",
+  "Stew",
+  "Bart",
+  "Kyle",
+  "White Kyle",
+  "Max",
+  "Caleb",
+  "Glass",
+  "Neek",
+  "Jimmy",
+  "D Loo",
 ];
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 
-for (const f of FRIENDS) {
-  await pool.query(
+const created = [];
+for (const name of NAMES) {
+  // do nothing, not do update: re-running this must never reset the PIN of
+  // someone who already has one and is using it.
+  const { rows } = await pool.query(
     `insert into users (name, pin) values ($1, $2)
-     on conflict (name) do update set pin = excluded.pin`,
-    [f.name, f.pin]
+     on conflict (name) do nothing
+     returning id, pin`,
+    [name, String(randomInt(1000, 10000))]
   );
-  console.log(`✓ ${f.name}`);
+  if (rows.length > 0) {
+    created.push({ name, pin: rows[0].pin });
+    console.log(`+ ${name}`);
+  } else {
+    console.log(`= ${name} (already there, PIN untouched)`);
+  }
+}
+
+if (created.length > 0) {
+  const width = Math.max(...created.map((c) => c.name.length));
+  console.log("\nNew PINs — hand these out, they are not stored anywhere else:\n");
+  for (const c of created) console.log(`  ${c.name.padEnd(width)}  ${c.pin}`);
 }
 
 await pool.end();
