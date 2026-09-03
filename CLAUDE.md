@@ -47,9 +47,10 @@ game's picks through `lib/scoring.ts::gradePick`, then (2) pulls the upcoming
 slate via `fetchWeekGames()` and upserts into `games`/`weeks` keyed on the
 odds provider's `external_id`. It's invoked daily by Vercel Cron
 (`vercel.json`, Hobby-plan limited to daily) or can be hit by hand with the
-`CRON_SECRET` bearer token. NFL weeks are approximated by an 8-day rolling
-window in `fetchWeekGames()`, not calendar weeks — see the comment there
-before changing that logic.
+`CRON_SECRET` bearer token. NFL weeks are approximated in `fetchWeekGames()`
+by a 7-day window anchored on the next game's kickoff (not on "now", which
+misses most of a slate whenever the next one is more than a window away) —
+see the comment there before changing that logic.
 
 **`lib/oddsApi.ts`** is the only integration with the-odds-api.com (used
 because DraftKings itself has no public API). If swapping providers, this

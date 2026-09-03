@@ -49,9 +49,9 @@ export async function GET(req: Request) {
 
   // 2. Pull in this week's full slate + DraftKings lines. Each game is
   // bucketed into its own real NFL week (rather than assuming the whole
-  // batch belongs to one week) since the 8-day fetch window can straddle
-  // two real weeks — e.g. a Monday-morning run still sees this week's MNF
-  // game alongside next week's Thu-Sun slate.
+  // batch belongs to one week) since the fetch window can still straddle two
+  // real weeks whenever a game is scheduled outside the usual Thu-Mon shape
+  // — an international kickoff, or flex scheduling moving one.
   const weekGames = await fetchWeekGames();
   const weekIdCache = new Map<string, number>();
   let weeksSynced = new Set<string>();

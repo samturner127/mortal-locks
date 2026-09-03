@@ -39,10 +39,17 @@ function requireKey() {
 }
 
 /**
- * Pulls DraftKings lines for every upcoming NFL game within the next 8 days —
- * i.e. this week's slate. NFL weeks don't map cleanly to calendar weeks, so
- * this window (paired with the Tuesday cron run) is a practical stand-in:
- * it captures Thursday through Monday games without pulling in next week's.
+ * Pulls DraftKings lines for the next week's slate.
+ *
+ * The window is anchored on the next game's kickoff, not on "now". Anchoring
+ * on now only works when a slate is already underway: with the season still
+ * a week out, a window running from today ended mid-week and returned 2 of
+ * Week 1's 16 games, so most of the slate simply never appeared. The same
+ * thing would happen after a bye or any gap longer than the window.
+ *
+ * 7 days from that first kickoff is exactly one NFL week — Thursday night
+ * through Monday night lands ~5 days out, and the following Thursday is 8,
+ * so this takes the whole slate and stops short of the next one.
  */
 export async function fetchWeekGames(): Promise<WeekGame[]> {
   requireKey();
@@ -54,13 +61,14 @@ export async function fetchWeekGames(): Promise<WeekGame[]> {
   const events = (await res.json()) as any[];
 
   const now = Date.now();
-  const windowEnd = now + 8 * 24 * 60 * 60 * 1000;
+  const upcoming = events.filter((e) => new Date(e.commence_time).getTime() > now);
+  if (upcoming.length === 0) return [];
 
-  return events
-    .filter((e) => {
-      const t = new Date(e.commence_time).getTime();
-      return t > now && t <= windowEnd;
-    })
+  const firstKickoff = Math.min(...upcoming.map((e) => new Date(e.commence_time).getTime()));
+  const windowEnd = firstKickoff + 7 * 24 * 60 * 60 * 1000;
+
+  return upcoming
+    .filter((e) => new Date(e.commence_time).getTime() <= windowEnd)
     .sort(
       (a, b) =>
         new Date(a.commence_time).getTime() - new Date(b.commence_time).getTime()
