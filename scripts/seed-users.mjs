@@ -24,6 +24,7 @@ const NAMES = [
   "Jimmy",
   "D Loo",
   "Bogner",
+  "Grant",
 ];
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
