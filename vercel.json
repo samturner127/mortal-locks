@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/sync-week",
-      "schedule": "0 12 * * *"
+      "schedule": "30 13 * * *"
     },
     {
       "path": "/api/cron/auto-pick",

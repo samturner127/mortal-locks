@@ -87,10 +87,15 @@ season-long double down to swing for more.
 1. Push this repo to GitHub, import it into Vercel.
 2. Add `DATABASE_URL`, `ODDS_API_KEY`, `CRON_SECRET` as Vercel env vars.
 3. Vercel Cron on the Hobby plan only supports daily jobs, which is what
-   `vercel.json` is set to for both `sync-week` (daily, grades games as they
-   finish through the week) and `auto-pick` (daily at 18:30 UTC, ~30-90min
-   after the real Sunday 10am Pacific cutoff depending on DST — a no-op on
-   every other day of the week). If you want faster score grading, swap in a
+   `vercel.json` is set to for both `sync-week` (daily at 13:30 UTC — 6:30am
+   Pacific in daylight time, 5:30am in standard — grading games as they
+   finish through the week, and on Sunday refreshing lines ahead of the
+   10am Pacific kickoffs)
+   and `auto-pick` (daily at 18:30 UTC, roughly 1-2 hours after the real
+   Sunday 10am Pacific cutoff depending on DST and where in the hour Vercel
+   fires it — a no-op on every other day of the week). The auto-pick pulls
+   live lines right before choosing, so games still to kick off are picked
+   on their current line and the 10am games on their last pregame one. If you want faster score grading, swap in a
    free external scheduler (cron-job.org) hitting the same URL with the
    `Authorization: Bearer <CRON_SECRET>` header instead.
 4. Share the URL with the group chat.

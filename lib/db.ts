@@ -159,8 +159,9 @@ export async function refreshGameLines(
  * Games in this week that hadn't kicked off as of the week's own pick
  * deadline — candidates for an auto-pick. Anchored to the week's
  * pick_closes_at rather than the current time, since the sweep's cron can
- * fire up to ~90 minutes after the real cutoff (Vercel Hobby only allows
- * daily schedules); using "now" at sweep time would wrongly exclude the
+ * fire up to ~2 hours after the real cutoff (Vercel Hobby only allows
+ * daily schedules, fired anywhere in the hour); using "now" at sweep time
+ * would wrongly exclude the
  * early Sunday slate, which always kicks off at the exact same instant as
  * the cutoff (1pm ET = 10am PT). The comparison is inclusive for the same
  * reason — a game starting exactly at the cutoff still counts as remaining.

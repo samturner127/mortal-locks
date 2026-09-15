@@ -3,7 +3,9 @@ import {
   getUsersMissingPickForClosedWeeks,
   getRemainingGamesForWeek,
   insertAutoPick,
+  refreshGameLines,
 } from "@/lib/db";
+import { fetchWeekGames } from "@/lib/oddsApi";
 import { collectSpreadCandidates, chooseBiggestUnderdog } from "@/lib/autoPick";
 
 // Sweeps for anyone who missed the weekly deadline and auto-assigns them the
@@ -17,6 +19,22 @@ export async function GET(req: Request) {
   }
 
   const missing = await getUsersMissingPickForClosedWeeks();
+
+  // Pull live lines before choosing, so the pick isn't made off whatever the
+  // daily sync or the last lock-in happened to store hours earlier. Only
+  // games still pregame come back from the feed, so a 10am game that has
+  // already kicked off keeps its last pregame line rather than a live
+  // in-game one. Skipped when nobody's missing a pick, which is most runs —
+  // this cron fires daily and the odds API is metered.
+  if (missing.length > 0) {
+    try {
+      await refreshGameLines(await fetchWeekGames());
+    } catch {
+      // Odds API hiccup -- fall back to the stored lines rather than leave
+      // the missed picks unassigned until tomorrow's run.
+    }
+  }
+
   const byWeek = new Map<number, number[]>();
   for (const m of missing) byWeek.set(m.weekId, [...(byWeek.get(m.weekId) ?? []), m.userId]);
 
