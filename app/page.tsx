@@ -77,7 +77,13 @@ export default function HomePage() {
   // already-existing pick just reloads the page.
   const [justLocked, setJustLocked] = useState(false);
   const [checkingLine, setCheckingLine] = useState(false);
-  const [lineChangeModal, setLineChangeModal] = useState<{ oldLine: number; newLine: number } | null>(null);
+  // Set once the odds check comes back, and cleared the moment any part of
+  // the pick changes. `line` is what will actually be locked; `movedFrom` is
+  // the old number when the line shifted, null when it held.
+  const [confirming, setConfirming] = useState<{
+    line: number | null;
+    movedFrom: number | null;
+  } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -116,6 +122,12 @@ export default function HomePage() {
         }
       });
   }, [mounted, session, router]);
+
+  // Changing anything about the pick throws away a pending confirmation —
+  // otherwise the panel could describe one pick while submit sent another.
+  useEffect(() => {
+    setConfirming(null);
+  }, [selectedGameId, pickType, pickedSide, isDoubleDown]);
 
   if (!session) return null;
 
@@ -261,10 +273,15 @@ export default function HomePage() {
   // could be hours stale if a line moved (e.g. a late injury announcement).
   // Fails open — if the check itself errors out, submit anyway rather than
   // block picking over a flaky odds-API call.
+  // Never submits directly. The odds check still runs first so the
+  // confirmation quotes the line that will actually be locked, but the
+  // confirmation itself is unconditional — people have locked the wrong
+  // side, and a line that happened not to move was shipping that straight
+  // through with nothing to read back.
   async function handleLockClick() {
     const expectedLine = currentExpectedLine();
     if (expectedLine === null) {
-      await submit();
+      setConfirming({ line: null, movedFrom: null });
       return;
     }
     setCheckingLine(true);
@@ -275,23 +292,25 @@ export default function HomePage() {
         body: JSON.stringify({ gameId: selectedGame.id, pickType, pickedSide, expectedLine }),
       });
       const d = await res.json();
-      if (res.ok && d.changed) {
-        setLineChangeModal({ oldLine: expectedLine, newLine: d.currentLine });
-      } else {
-        await submit();
-      }
+      setConfirming(
+        res.ok && d.changed
+          ? { line: d.currentLine, movedFrom: expectedLine }
+          : { line: expectedLine, movedFrom: null }
+      );
     } catch {
-      await submit();
+      // The freshness check is best-effort — fall back to confirming against
+      // the line already on screen rather than blocking the pick.
+      setConfirming({ line: expectedLine, movedFrom: null });
     } finally {
       setCheckingLine(false);
     }
   }
 
-  function acceptLineChange() {
-    if (!lineChangeModal) return;
-    const newLine = lineChangeModal.newLine;
-    setLineChangeModal(null);
-    submit(newLine);
+  function confirmLock() {
+    if (!confirming) return;
+    const line = confirming.line;
+    setConfirming(null);
+    submit(line ?? undefined);
   }
 
   return (
@@ -467,32 +486,52 @@ export default function HomePage() {
               onChange={setIsDoubleDown}
             />
 
-            {lineChangeModal ? (
+            {confirming ? (
               <div className="mt-6 rounded-lg border border-amber bg-amber/10 p-4">
-                <p className="font-mono text-[11px] tracking-widest2 text-amber uppercase mb-1">
-                  Odds changed
+                <p className="font-mono text-[11px] tracking-widest2 text-amber uppercase mb-2">
+                  Confirm your lock
                 </p>
-                <p className="text-sm mb-3">
-                  The line moved since we last synced —{" "}
-                  <span className="font-mono">
-                    {pickType === "spread" ? formatSpread(lineChangeModal.oldLine) : lineChangeModal.oldLine} →{" "}
-                    {pickType === "spread" ? formatSpread(lineChangeModal.newLine) : lineChangeModal.newLine}
-                  </span>
-                  . Lock it in at the new line?
+                {/* The side is the headline: picking the wrong team is the
+                    mistake this whole step exists to catch. */}
+                <p className="font-display text-2xl leading-tight">
+                  {describeSelection(selectedGame, pickType, pickedSide, confirming.line)}
+                  {isDoubleDown && <span className="ml-2 text-loss text-lg align-middle">2x</span>}
                 </p>
-                <div className="flex gap-2">
+                <p className="font-mono text-xs text-mute mt-1">
+                  {selectedGame.away_team} @ {selectedGame.home_team}
+                </p>
+
+                {confirming.movedFrom !== null && confirming.line !== null && (
+                  <p className="text-sm mt-3">
+                    Odds moved since we last synced —{" "}
+                    <span className="font-mono">
+                      {pickType === "spread" ? formatSpread(confirming.movedFrom) : confirming.movedFrom} →{" "}
+                      {pickType === "spread" ? formatSpread(confirming.line) : confirming.line}
+                    </span>
+                    . This locks in at the new number.
+                  </p>
+                )}
+
+                <p className="text-mute text-xs mt-3">
+                  {isDoubleDown
+                    ? "Permanent once submitted, and it spends your double down — win, lose or push."
+                    : "Permanent once submitted. No changes afterwards."}
+                </p>
+
+                <div className="flex gap-2 mt-4">
                   <button
-                    onClick={acceptLineChange}
+                    onClick={confirmLock}
                     disabled={status === "saving"}
                     className="flex-1 bg-amber text-field font-semibold rounded-md py-2 hover:opacity-90 transition disabled:opacity-50"
                   >
-                    Accept new line
+                    {status === "saving" ? "Saving…" : "Yes, lock it in"}
                   </button>
                   <button
-                    onClick={() => setLineChangeModal(null)}
-                    className="flex-1 border border-panelLine rounded-md py-2 text-mute hover:text-ink transition"
+                    onClick={() => setConfirming(null)}
+                    disabled={status === "saving"}
+                    className="flex-1 border border-panelLine rounded-md py-2 text-mute hover:text-ink transition disabled:opacity-50"
                   >
-                    Cancel
+                    Go back
                   </button>
                 </div>
               </div>
@@ -811,6 +850,23 @@ function pickCommentary(
   if (backed === BEARS) return "Mmmmmm zesty!";
 
   return "No changes once submitted.";
+}
+
+/**
+ * The pick as it reads before it exists — same shape as describePick, but
+ * from the live selection and a line that may not be posted yet.
+ */
+function describeSelection(
+  game: { home_team: string; away_team: string },
+  pickType: PickType,
+  pickedSide: PickedSide,
+  line: number | null
+): string {
+  if (pickType === "spread") {
+    const team = pickedSide === "home" ? game.home_team : game.away_team;
+    return line === null ? team : `${team} ${formatSpread(line)}`;
+  }
+  return `${pickedSide === "over" ? "Over" : "Under"} ${line === null ? "—" : line}`;
 }
 
 function describePick(p: {
