@@ -512,11 +512,12 @@ export default function HomePage() {
                   </p>
                 )}
 
-                <p className="text-mute text-xs mt-3">
-                  {isDoubleDown
-                    ? "Permanent once submitted, and it spends your double down — win, lose or push."
-                    : "Permanent once submitted. No changes afterwards."}
-                </p>
+                {isDoubleDown && (
+                  <p className="text-mute text-xs mt-3">
+                    Permanent once submitted, and it spends your double down — win, lose or
+                    push.
+                  </p>
+                )}
 
                 <div className="flex gap-2 mt-4">
                   <button
@@ -524,14 +525,14 @@ export default function HomePage() {
                     disabled={status === "saving"}
                     className="flex-1 bg-amber text-field font-semibold rounded-md py-2 hover:opacity-90 transition disabled:opacity-50"
                   >
-                    {status === "saving" ? "Saving…" : "Yes, lock it in"}
+                    {status === "saving" ? "Saving…" : "Lock it in"}
                   </button>
                   <button
                     onClick={() => setConfirming(null)}
                     disabled={status === "saving"}
                     className="flex-1 border border-panelLine rounded-md py-2 text-mute hover:text-ink transition disabled:opacity-50"
                   >
-                    Go back
+                    I don&apos;t know Jim
                   </button>
                 </div>
               </div>
