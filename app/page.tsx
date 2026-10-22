@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSession, clearSession, type Session } from "@/lib/session";
 import { describePickAbbrev } from "@/lib/pickFormat";
@@ -128,6 +128,22 @@ export default function HomePage() {
   useEffect(() => {
     setConfirming(null);
   }, [selectedGameId, pickType, pickedSide, isDoubleDown]);
+
+  // Moving to a different game disarms the double down. It's one flag for the
+  // whole page rather than a property of the selection, so without this it
+  // rode along to whatever you picked next — and the control sits below the
+  // slate, so it's off-screen at the moment you'd scroll up to switch games.
+  // Changing side or market within a game leaves it armed; that's still the
+  // same pick. Only a real switch counts, not the initial selection the slate
+  // makes on load, which would otherwise clobber an existing pick's flag.
+  const previousGameId = useRef<number | null>(null);
+  useEffect(() => {
+    const previous = previousGameId.current;
+    previousGameId.current = selectedGameId;
+    if (previous !== null && selectedGameId !== null && previous !== selectedGameId) {
+      setIsDoubleDown(false);
+    }
+  }, [selectedGameId]);
 
   if (!session) return null;
 
