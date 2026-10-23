@@ -6,7 +6,7 @@ import { getUsers } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  // getUsers() never selects the PIN column, so there's nothing to strip here.
   const users = await getUsers();
-  // Never send PINs to the client — just id/name for the picker.
-  return NextResponse.json({ users: users.map((u) => ({ id: u.id, name: u.name })) });
+  return NextResponse.json({ users });
 }

@@ -67,3 +67,17 @@ create table if not exists picks (
 
 create index if not exists idx_picks_week on picks(week_id);
 create index if not exists idx_games_week on games(week_id);
+
+-- Fixed-window rate-limit counters, one row per bucket key (see
+-- lib/rateLimit.ts for the keys and their limits).
+--
+-- Kept in Postgres rather than process memory on purpose: serverless
+-- instances don't share state, so an in-memory counter resets on every cold
+-- start and anyone who drives enough concurrency gets a fresh allowance in
+-- each new instance — which is exactly the traffic shape a rate limit is
+-- supposed to stop. One shared table is the only place the count is honest.
+create table if not exists rate_limits (
+  key text primary key,
+  count int not null default 0,
+  window_started_at timestamptz not null default now()
+);

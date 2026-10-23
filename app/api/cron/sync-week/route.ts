@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
-import { pool } from "@/lib/db";
+import { cronAuthError } from "@/lib/cronAuth";
+import { pool, pruneRateLimits } from "@/lib/db";
 import { fetchWeekGames, fetchScores } from "@/lib/oddsApi";
 import { gradePick } from "@/lib/scoring";
 import { computeNflWeek } from "@/lib/nflWeek";
 
 // Called weekly by a scheduler (see vercel.json). Also safe to hit by hand.
 export async function GET(req: Request) {
-  const auth = req.headers.get("authorization");
-  if (process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authError = cronAuthError(req);
+  if (authError) {
+    return NextResponse.json({ error: authError.error }, { status: authError.status });
   }
 
   const results: Record<string, unknown> = {};
@@ -86,6 +87,9 @@ export async function GET(req: Request) {
   }
   results.weeksSynced = weekGames.length > 0 ? Array.from(weeksSynced) : [];
   results.gamesInSlate = weekGames.length;
+
+  // Housekeeping: drop rate-limit buckets whose window closed long ago.
+  results.rateLimitRowsPruned = await pruneRateLimits();
 
   return NextResponse.json({ ok: true, ...results });
 }

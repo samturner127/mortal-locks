@@ -18,6 +18,9 @@ if (process.env.NODE_ENV !== "production") global._pgPool = pool;
 
 export type User = { id: number; name: string; pin: string };
 
+/** A user without the PIN — what anything client-facing is allowed to see. */
+export type PoolMember = { id: number; name: string };
+
 export type Week = {
   id: number;
   season: number;
@@ -63,8 +66,15 @@ export type Pick = {
   result: "win" | "loss" | "push" | null;
 };
 
-export async function getUsers(): Promise<User[]> {
-  const { rows } = await pool.query<User>(`select id, name, pin from users order by name asc`);
+/**
+ * The pool's roster for the name picker. Deliberately does NOT select `pin`:
+ * the column used to come back here and be stripped in the route, which left
+ * every PIN in the pool one careless `json({ users })` away from being
+ * published. Nothing needs the PIN except verification, which reads the
+ * single row it's checking via getUserById.
+ */
+export async function getUsers(): Promise<PoolMember[]> {
+  const { rows } = await pool.query<PoolMember>(`select id, name from users order by name asc`);
   return rows;
 }
 
@@ -367,4 +377,49 @@ export async function getHistoryGrid(): Promise<HistoryEntry[]> {
      order by w.pick_opens_at asc, u.name asc`
   );
   return rows;
+}
+
+/**
+ * Bumps a fixed-window rate-limit counter and returns its new state.
+ *
+ * One statement, so concurrent requests can't both read a stale count and
+ * both decide they're under the limit: the upsert either starts a fresh
+ * window (when the stored one has aged out) or increments the existing one,
+ * and the row lock serializes anything racing it. Callers compare the
+ * returned count against their own limit — see lib/rateLimit.ts.
+ */
+export async function bumpRateLimit(
+  key: string,
+  windowSeconds: number
+): Promise<{ count: number; windowStartedAt: string }> {
+  const { rows } = await pool.query(
+    `insert into rate_limits (key, count, window_started_at)
+     values ($1, 1, now())
+     on conflict (key) do update set
+       count = case
+                 when rate_limits.window_started_at < now() - make_interval(secs => $2)
+                 then 1
+                 else rate_limits.count + 1
+               end,
+       window_started_at = case
+                 when rate_limits.window_started_at < now() - make_interval(secs => $2)
+                 then now()
+                 else rate_limits.window_started_at
+               end
+     returning count, window_started_at as "windowStartedAt"`,
+    [key, windowSeconds]
+  );
+  return rows[0];
+}
+
+/**
+ * Drops rate-limit rows whose window closed over a day ago. Called from the
+ * daily sync — without it the table grows one permanent row per distinct
+ * client IP that ever hit a limited endpoint.
+ */
+export async function pruneRateLimits(): Promise<number> {
+  const { rowCount } = await pool.query(
+    `delete from rate_limits where window_started_at < now() - interval '1 day'`
+  );
+  return rowCount ?? 0;
 }

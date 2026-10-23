@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cronAuthError } from "@/lib/cronAuth";
 import {
   getUsersMissingPickForClosedWeeks,
   getRemainingGamesForWeek,
@@ -13,9 +14,9 @@ import { collectSpreadCandidates, chooseBiggestUnderdog } from "@/lib/autoPick";
 // number of times. Called daily by a scheduler (see vercel.json); a no-op on
 // days when no week's cutoff has just passed. Also safe to hit by hand.
 export async function GET(req: Request) {
-  const auth = req.headers.get("authorization");
-  if (process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authError = cronAuthError(req);
+  if (authError) {
+    return NextResponse.json({ error: authError.error }, { status: authError.status });
   }
 
   const missing = await getUsersMissingPickForClosedWeeks();
@@ -29,9 +30,12 @@ export async function GET(req: Request) {
   if (missing.length > 0) {
     try {
       await refreshGameLines(await fetchWeekGames());
-    } catch {
+    } catch (err) {
       // Odds API hiccup -- fall back to the stored lines rather than leave
-      // the missed picks unassigned until tomorrow's run.
+      // the missed picks unassigned until tomorrow's run. Logged so a spent
+      // API quota is visible: silently assigning auto-picks off stale lines
+      // looks exactly like working correctly.
+      console.error("auto-pick: live odds fetch failed, using stored lines", err);
     }
   }
 
